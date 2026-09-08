@@ -1,6 +1,7 @@
 import { schema, t } from "@colyseus/schema";
 
 export const Player = schema({
+    name: t.string().default("Player"),
     x: t.number().default(0),
     y: t.number().default(0),
     z: t.number().default(0),

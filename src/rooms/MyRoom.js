@@ -51,16 +51,19 @@ export class MyRoom extends Room {
 
         this.onMessage("hit", (client, data) => {
             const targetClient = this.clients.getById(data.targetSessionId);
+            const attacker = this.state.players.get(client.sessionId);
+            const killerName = attacker ? attacker.name : "Unknown";
             if (targetClient) {
-                targetClient.send("tookDamage", { damage: data.damage, killerName: client.sessionId });
+                targetClient.send("tookDamage", { damage: data.damage, killerName });
             }
         });
     }
 
     onJoin(client, options) {
         const player = new Player();
+        player.name = (options && options.name) ? String(options.name).slice(0, 20) : "Player";
         this.state.players.set(client.sessionId, player);
-        console.log(client.sessionId, "joined!");
+        console.log(client.sessionId, player.name, "joined!");
     }
 
     onLeave(client, consented) {
