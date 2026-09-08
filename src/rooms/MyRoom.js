@@ -1,5 +1,12 @@
-import { Room } from "colyseus";
+import { Room, ServerError } from "colyseus";
 import { MyRoomState, Player, Item } from "./schema/MyRoomState.js";
+
+const bannedWords = ["fuck", "shit", "nigger", "nigga", "bitch", "cunt", "asshole"];
+
+function containsBannedWord(text) {
+    const lower = text.toLowerCase();
+    return bannedWords.some((word) => lower.includes(word));
+}
 
 export class MyRoom extends Room {
     maxClients = 8;
@@ -60,8 +67,15 @@ export class MyRoom extends Room {
     }
 
     onJoin(client, options) {
+        let requestedName = (options && options.name) ? String(options.name).trim().slice(0, 20) : "";
+        if (!requestedName) requestedName = "Player";
+
+        if (containsBannedWord(requestedName)) {
+            throw new ServerError(4000, "bad_name");
+        }
+
         const player = new Player();
-        player.name = (options && options.name) ? String(options.name).slice(0, 20) : "Player";
+        player.name = requestedName;
         this.state.players.set(client.sessionId, player);
         console.log(client.sessionId, player.name, "joined!");
     }
