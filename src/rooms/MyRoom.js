@@ -13,6 +13,17 @@ export class MyRoom extends Room {
     state = new MyRoomState();
 
     onCreate(options) {
+        this.isPrivateRoom = false;
+        this.passcode = "";
+
+        if (options && options.isPrivate && options.passcode) {
+            this.isPrivateRoom = true;
+            this.passcode = String(options.passcode);
+        }
+
+        const roomName = (options && options.roomName) ? String(options.roomName).trim().slice(0, 24) : "Room";
+        this.setMetadata({ name: roomName, isPrivate: this.isPrivateRoom });
+
         this.onMessage("move", (client, data) => {
             const player = this.state.players.get(client.sessionId);
             if (!player) return;
@@ -67,6 +78,13 @@ export class MyRoom extends Room {
     }
 
     onJoin(client, options) {
+        if (this.isPrivateRoom) {
+            const provided = (options && options.passcode) ? String(options.passcode) : "";
+            if (provided !== this.passcode) {
+                throw new ServerError(4001, "wrong_passcode");
+            }
+        }
+
         let requestedName = (options && options.name) ? String(options.name).trim().slice(0, 20) : "";
         if (!requestedName) requestedName = "Player";
 
