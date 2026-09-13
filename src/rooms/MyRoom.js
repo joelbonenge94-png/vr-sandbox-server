@@ -13,17 +13,6 @@ export class MyRoom extends Room {
     state = new MyRoomState();
 
     onCreate(options) {
-        this.isPrivateRoom = false;
-        this.passcode = "";
-
-        if (options && options.isPrivate && options.passcode) {
-            this.isPrivateRoom = true;
-            this.passcode = String(options.passcode);
-        }
-
-        const roomName = (options && options.roomName) ? String(options.roomName).trim().slice(0, 24) : "Room";
-        this.setMetadata({ name: roomName, isPrivate: this.isPrivateRoom });
-
         this.onMessage("move", (client, data) => {
             const player = this.state.players.get(client.sessionId);
             if (!player) return;
@@ -73,6 +62,16 @@ export class MyRoom extends Room {
             const killerName = attacker ? attacker.name : "Unknown";
             if (targetClient) {
                 targetClient.send("tookDamage", { damage: data.damage, killerName });
+            }
+        });
+
+        this.onMessage("webrtc-signal", (client, data) => {
+            const targetClient = this.clients.getById(data.targetSessionId);
+            if (targetClient) {
+                targetClient.send("webrtc-signal", {
+                    fromSessionId: client.sessionId,
+                    signal: data.signal
+                });
             }
         });
     }
